@@ -8,75 +8,140 @@
  */
 (function($){
     $.fn.extend({
-        lightSwitch: function(options)
-        {
-            var defaults =
-            {
-                animSpeed : 120,
-                hoverSpeed : 100,
-                switchImg : 'switch.png',
-                switchImgCover: 'switchplate.png',
-                switchImgCoverWidth : '63px',
-                switchImgCoverHeight : '18px',
-                disabledImg : 'disabled.png',
-                onShift : '0px 0px',
-                offShift : '-37px 0px',
-                peekOff : '-6px 0px',
-                peekOn : '-31px 0px',
-                baseDir : ''
+        lightSwitch: function(options) {
+            var defaults = {
+                "hover": {
+                    "speed": 100,
+                    "on":  {"x": "-31px", "y": "0px"},
+                    "off": {"x": "-6px",  "y": "0px"}
+                },
+                "click": {
+                    "speed": 120,
+                    "on":  {"x": "0px",   "y": "0px"},
+                    "off": {"x": "-37px", "y": "0px"}
+                },
+                "dir": "",
+                "switch": "switch.png",
+                "cover": "switchplate.png",
+                "disabled": "disabled.png",
+                "height": "18px",
+                "width": "63px"
             };
             var options = $.extend(defaults, options);
 
+            var createLightSwitch = function(disabled) {
+                var o = options,
+                    base = $("<span/>"),
+                    baseImg = $("<img />", {
+                        "src": "" + o.dir + o.disabled
+                    });
+
+                if (!disabled) {
+                    base.addClass("switch");
+
+                    baseImg.attr("width", o.width);
+                    baseImg.attr("height", o.height);
+                    baseImg.attr("src", "" + o.dir + o.cover);
+                }
+
+                base.append(baseImg)
+                base.css({
+                    'display':'inline-block',
+                    'background-image':'url("'+o.dir+o.switch+'")',
+                    'background-repeat':'no-repeat',
+                    'overflow':'hidden',
+                    'cursor':'pointer',
+                    'margin-right':'2px'
+                });
+
+                return base;
+            };
+
             return this.each(function() {
-                var o=options;
-                var obj = $(this);
+                var o=options,
+                    lightSwitch,
+                    input = $(this);
 
-                if($(this).attr('disabled'))
-                {
-                    $(this).css({'display':'none'}).after('<span><img src="'+o.baseDir+o.disabledImg+'" /></span>');
-                }
-                else
-                {
-                    $(this).css({'display':'none'}).after('<span class="switch"><img src="'+o.baseDir+o.switchImgCover+'" width="'+o.switchImgCoverWidth+'" height="'+o.switchImgCoverHeight+'" /></span>'); //'display':'none'
-                }
-                $(this).next('span.switch').css({'display':'inline-block','background-image':'url("'+o.baseDir+o.switchImg+'")','background-repeat':'no-repeat','overflow':'hidden','cursor':'pointer','margin-right':'2px'});
+                // Create lightswitch
+                lightSwitch = createLightSwitch(input.attr('disabled'), o)
 
-                $(this).next('span.switch').click(function(){
+                // Replace input with lightswitch
+                input.hide().after(lightSwitch)
+
+                // Setup switch handlers
+                lightSwitch.click(function() {
+                    var c = o.click,
+                        radioGroupName;
 
                     // When we click any span image for a radio button, animate the previously selected radio button to 'off'.
-                    if($(this).prev().is(':radio'))
-                    {
+                    if(input.is(':radio')) {
                         radioGroupName = $(this).prev().attr('name');
-                        $('input[name="'+radioGroupName+'"]'+':checked + span').stop().animate({'background-position':o.offShift},o.animSpeed);
+                        $('input[name="'+radioGroupName+'"]'+':checked + span').stop().animate({
+                            'background-position-x': c.off.x,
+                            'background-position-y': c.off.y
+                        }, c.speed);
                     }
-                    if($(this).prev().is(':checked'))
-                    {
-                        $(this).stop().animate({'background-position':o.offShift},o.animSpeed); // off
-                        $(this).prev().removeAttr('checked');
+
+                    if(input.is(':checked')) {
+                        $(this).stop().animate({
+                            'background-position-x': c.off.x,
+                            'background-position-y': c.off.y
+                        }, c.speed); // off
+                        input.removeAttr('checked');
+                    } else {
+                        $(this).stop().animate({
+                            'background-position-x': c.on.x,
+                            'background-position-y': c.on.y
+                        }, c.speed); // on
+
+                        if(input.is(':radio')){
+                            $('input[name="'+radioGroupName+'"]'+':checked').removeAttr('checked');
+                        }
+                        input.attr('checked','checked');
                     }
-                    else
-                    {
-                        $(this).stop().animate({'background-position':o.onShift},o.animSpeed); // on
-                        if($(this).prev().is(':radio')) $('input[name="'+radioGroupName+'"]'+':checked').removeAttr('checked');
-                        $(this).prev('input').attr('checked','checked');
+                }).hover(
+                    function() {
+                        var h = o.hover;
+                        $(this).stop().animate({
+                            'background-position-x': input.is(':checked') ? h.off.x : h.on.x,
+                            'background-position-y': input.is(':checked') ? h.off.y : h.on.y
+                        }, h.speed);
+                    },
+                    function(){
+                        var c = o.click;
+                        $(this).stop().animate({
+                            'background-position-x': input.is(':checked') ? c.on.x : c.off.x,
+                            'background-position-y': input.is(':checked') ? c.on.y : c.off.y
+                        }, c.speed);
                     }
-                }).hover(function(){
-                        $(this).stop().animate({'background-position': $(this).prev().is(':checked') ? o.peekOff : o.peekOn},o.hoverSpeed);
-                    },function(){
-                        $(this).stop().animate({'background-position': $(this).prev().is(':checked') ? o.onShift :o.offShift},o.hoverSpeed);
-                });
-                $(this).next('span.switch').css({'background-position': $(this).is(':checked') ? o.onShift : o.offShift }); // setup default states
+                );
+
+                lightSwitch.css({
+                    'background-position-x': $(this).is(':checked') ? o.click.on.x : o.click.off.x,
+                    'background-position-y': $(this).is(':checked') ? o.click.on.y : o.click.off.y
+                }); // setup default states
 
                 $('input + span').live("click", function() { return false; });
 
-                $(this).change(function(){
-                    radioGroupName = $(this).attr('name');
-                    if($(this).is(':radio'))
-                    {
-                        $(this).stop().animate({'background-position':o.onShift},o.animSpeed);
-                        $('input[name="'+radioGroupName+'"]'+' + span').stop().animate({'background-position':o.offShift},o.animSpeed);
+                input.change(function(){
+                    var c = o.click,
+                        radioGroupName = $(this).attr('name');
+
+                    if($(this).is(':radio')) {
+                        $(this).stop().animate({
+                            'background-position-x': c.on.x,
+                            'background-position-y': c.on.y
+                        }, c.speed);
+
+                        $('input[name="'+radioGroupName+'"]'+' + span').stop().animate({
+                            'background-position-x': c.off.x,
+                            'background-position-y': c.off.x
+                        }, c.speed);
                     }
-                    $(this).next('span').stop().animate({'background-position': $(this).is(':checked') ? o.onShift :o.offShift},o.animSpeed);
+
+                    lightSwitch.stop().animate({
+                        'background-position': $(this).is(':checked') ? o.onShift :o.offShift
+                    }, c.speed);
                 });
             });
         }
