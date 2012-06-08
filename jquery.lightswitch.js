@@ -25,9 +25,11 @@
                 "cover": "switchplate.png",
                 "disabled": "disabled.png",
                 "height": "18px",
-                "width": "63px"
+                "width": "63px",
+                "change": function(){}
             };
-            var options = $.extend(defaults, options);
+
+            options = $.extend(defaults, options);
 
             var createLightSwitch = function(disabled) {
                 var o = options,
@@ -44,10 +46,10 @@
                     baseImg.attr("src", "" + o.dir + o.cover);
                 }
 
-                base.append(baseImg)
+                base.append(baseImg);
                 base.css({
                     'display':'inline-block',
-                    'background-image':'url("'+o.dir+o.switch+'")',
+                    'background-image':'url("' + o.dir + o["switch"] + '")',
                     'background-repeat':'no-repeat',
                     'overflow':'hidden',
                     'cursor':'pointer',
@@ -63,10 +65,10 @@
                     input = $(this);
 
                 // Create lightswitch
-                lightSwitch = createLightSwitch(input.attr('disabled'), o)
+                lightSwitch = createLightSwitch(input.attr('disabled'), o);
 
                 // Replace input with lightswitch
-                input.hide().after(lightSwitch)
+                input.hide().after(lightSwitch);
 
                 // Setup switch handlers
                 lightSwitch.click(function() {
@@ -99,6 +101,10 @@
                         }
                         input.attr('checked','checked');
                     }
+
+                    //because change is not triggered unless user clicks a checkbox
+                    input.change();
+
                 }).hover(
                     function() {
                         var h = o.hover;
@@ -123,12 +129,12 @@
 
                 $('input + span').live("click", function() { return false; });
 
-                input.change(function(){
+                input.change(function(event){
                     var c = o.click,
                         radioGroupName = $(this).attr('name');
 
                     if($(this).is(':radio')) {
-                        $(this).stop().animate({
+                        $(this).animate({
                             'background-position-x': c.on.x,
                             'background-position-y': c.on.y
                         }, c.speed);
@@ -139,9 +145,11 @@
                         }, c.speed);
                     }
 
-                    lightSwitch.stop().animate({
+                    lightSwitch.animate({
                         'background-position': $(this).is(':checked') ? o.onShift :o.offShift
                     }, c.speed);
+
+                    o.change(event);
                 });
             });
         }
