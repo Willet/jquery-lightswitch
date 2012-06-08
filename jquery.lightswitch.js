@@ -146,7 +146,8 @@
                     }
 
                     lightSwitch.animate({
-                        'background-position': $(this).is(':checked') ? o.onShift :o.offShift
+                        'background-position-x': $(this).is(':checked') ? c.on.x : c.off.x,
+                        'background-position-y': $(this).is(':checked') ? c.on.y : c.off.y
                     }, c.speed);
 
                     o.change(event);
